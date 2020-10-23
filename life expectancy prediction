@@ -1,0 +1,45 @@
+
+female <- read.csv("female.csv",fileEncoding = 'UTF-8-BOM') #Read in Data
+
+#A Multiple Regression Model must meet 6 assumptions for it to be reliable and viable. When assumptions are violated a model loses its viability (Candace Flatt, Ronald L. Jacobs, 2019). 
+#The first assumption is that the Relationship between dependent and independent variables are linear and additive:
+#A straight line relationship is required between two variables for the linearity assumption to be fulfilled. 
+#The pairs() function in R produces a matrix of scatterplots to inspect linearity after reading in the data.
+#The Red lines the scatterplot shows linearity between the variables.
+
+pairs(female, panel = panel.smooth) #initial linearity check
+
+first<-lm(LE~TFR+MORT+TFR*MORT,data=female, na.action = na.omit) #Then the initial regression is done using both predictors and their product to test for interaction between the predictors.
+summary(first)
+
+#check for Linearity
+par(mfrow=c(2,2))
+plot(first)
+second<-lm(LE~TFR+MORT+TFR*MORT+I(TFR^2)+I(MORT^2), data = female)
+summary(second)
+plot(second)
+
+third<-update(second,~.-TFR:MORT)
+summary(third)
+
+fourth<-update(third,~.-I(TFR^2))
+summary(fourth)
+plot(fourth)
+
+#test for homoscedacity: no homoscedacity because scale_location doesn't fan out
+
+
+#autocorrelation check
+install.packages("carData")
+library(car)
+durbinWatsonTest(fourth)
+
+#Multicollinearity check
+cor(female$TFR, female$MORT, use = "complete.obs")
+
+#influential data point check
+Maxcook<-cooks.distance(fourth)
+cooks.distance(fourth)
+print(max(Maxcook))
+
+predict(fourth)
